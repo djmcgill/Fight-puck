@@ -1,38 +1,28 @@
-module IO.KBM (kbm, motion) where
+module KBM where
 
-import Graphics.Rendering.OpenGL.GL
-import Graphics.UI.GLUT
-import System.Exit (exitSuccess)
-import Control.Concurrent.MVar
+import Control.Lens
+import Graphics.Gloss
+import Graphics.Gloss.Interface.Pure.Game
 
 import Game (Pos(..))
-import IO.State
-import IO.Helpers
-import IO.Draw
+import State
+import Helpers
+import Draw
 
 -----------------
 -- Mouse click --
 -----------------
-
-kbm :: MVar State -> KeyboardMouseCallback
-kbm _   (Char '\27') Down _ _ = exitSuccess
-kbm ref (Char c)     Down _ _ = do 
-    modifyMVar_ ref $ \state -> case c of 
-        -- reset all the variables
-        '.' -> return initialState
-        -- iterate all the things (not yet implemented)
-        ',' -> return $ updateState state
-        -- zoom
-        '[' -> return $ state {zoom = zoom state * (9/10)}
-        ']' -> return $ state {zoom = zoom state * (10/9)}
-        -- pan
-        'w' -> return $ state {pan = panUp    (pan state)}
-        's' -> return $ state {pan = panDown  (pan state)}
-        'a' -> return $ state {pan = panLeft  (pan state)}
-        'd' -> return $ state {pan = panRight (pan state)}
-        _   -> return state
-    postRedisplay Nothing
-kbm ref (MouseButton LeftButton) Down _ mouse = do
+handleInput :: Event -> State -> State
+handleInput (EventKey (Char 'w') Down _ _) = pan %~ panUp
+handleInput (EventKey (Char 's') Down _ _) = pan %~ panDown
+handleInput (EventKey (Char 'a') Down _ _) = pan %~ panLeft
+handleInput (EventKey (Char 'd') Down _ _) = pan %~ panRight
+handleInput (EventKey (Char '-') Down _ _) = scaleFactor *~ 0.9
+handleInput (EventKey (Char '=') Down _ _) = scaleFactor *~ 1.1
+handleInput (EventKey (Char '.') Down _ _) = const initialState
+handleInput _                              = id
+{-
+keyCallback ref (MouseButton LeftButton) Down _ mouse = do
 -- change which hex is selected
     modifyMVar_ ref $ \state' -> do
         let state = state'{mouse = Just LeftButton}
@@ -42,25 +32,28 @@ kbm ref (MouseButton LeftButton) Down _ mouse = do
             Just (GUI GUISelect) -> state {mode = Selection Nothing}
             _ -> state
     postRedisplay Nothing
-kbm ref (MouseButton RightButton) Down _ mouse = do
+keyCallback ref (MouseButton RightButton) Down _ mouse = do
 -- move the selected hex
     modifyMVar_ ref $ \state' ->
         return $ state'{mouse = Just RightButton}
-kbm ref (MouseButton MiddleButton) Down _ mouse = do
-    modifyMVar_ ref $ \state -> 
+keyCallback ref (MouseButton MiddleButton) Down _ mouse = do
+    modifyMVar_ ref $ \state ->
         return $ state {mouse = Just MiddleButton, mPos = Just mouse}
     addTimerCallback 10 $ middlePan ref
-kbm ref (MouseButton _) Up _ _ =
+keyCallback ref (MouseButton _) Up _ _ =
     mouseUp ref
-kbm _ _ _ _ _ = return ()
+-}
+keyCallback _ _ _ _ _ _ = return ()
 
+-- TODO: change this to lens fst and snd
+panUp, panDown, panLeft, panRight :: (Float, Float) -> (Float, Float)
 panUp    (x,y) = (x  ,y-1)
 panDown  (x,y) = (x  ,y+1)
 panLeft  (x,y) = (x+1,y  )
 panRight (x,y) = (x-1,y  )
-
+{-
 getHit :: State -> Position -> IO (Maybe HitReturn)
-getHit state (Position x y) = do
+getHit state (Position x y) = undefined {- do
     viewport'@(_, Size width height) <- get viewport
     (_, mhits) <- getHitRecords 512 $ withName (Name 0) $ do
         matrixMode $= Projection
@@ -72,7 +65,7 @@ getHit state (Position x y) = do
         matrixMode $= Modelview 0
         draw state
         flush
-    return (processHits mhits)
+    return (processHits mhits) -}
 
 -- assumes only one thing is clicked at a time
 -- | Converts hitrecords to the thing (a hex, a gui element or nothing)
@@ -82,27 +75,20 @@ processHits (Just (HitRecord _ _ (iden:names):_))
     | iden == hexName = Just (Hex (toPos names))
     | iden == guiName = Just (GUI (toGUIElem names))
   where
-    toPos [Name y,Name x] =
-        let x' = toInt . fromIntegral $ x
-            y' = toInt . fromIntegral $ y
-        in Pos (x',y')
+    toPos [signY, Name y, signX, Name x] =
+        let x' = correctSign signX $ fromIntegral x
+            y' = correctSign signY $ fromIntegral y
+        in Pos x' y'
     toPos _ = error "Invalid Hex"
     toGUIElem [elem] | elem == selectName = GUISelect
     toGUIElem _ = error "Invalid GUI element"
+    correctSign sign = if sign == positiveName then id else negate
 processHits _ = Nothing
-
-mouseUp :: MVar State -> IO ()
-mouseUp ref = modifyMVar_ ref $ \state ->
-    return $ state{mouse = Nothing, mPos = Nothing}
-
+-}
+{-
 ------------------
 -- Mouse motion --
 ------------------
-motion :: MVar State -> Position -> IO ()
-motion ref pos = do
-    modifyMVar_ ref $ \state -> case mPos state of
-        Just _  -> return $ state{mPos = Just pos}
-        Nothing -> return state
 
 middlePan :: MVar State -> IO ()
 middlePan ref =
@@ -113,7 +99,7 @@ middlePan ref =
             postRedisplay Nothing
             return $ state{pan = panWithPos (pan state) pos size, mPos = Just pos}
         _ -> return state
-    
+
 -- | pans the screen a little in the direction indicated by the mouse position.
 --   i.e. if the mouse is in the top-left of the screen, pans up and left.
 panWithPos :: (Float,Float) -> Position -> Size -> (Float,Float)
@@ -127,3 +113,4 @@ panWithPos (panX,panY) (Position x y) (Size w h) = (panX',panY')
           speedMod = 0.7
           panX' = panX - (xMod * speedMod)
           panY' = panY + (yMod * speedMod)
+-}
