@@ -84,11 +84,6 @@ coord (Pos x y)
       in (x'* 2*h*cos(pi/6), x'* 2*h*sin(pi/6)
                            + y'* 2*h)
 
--- | > pairs [1,2,3,4] = [(1,2),(2,3),(3,4)]
-pairs :: [a] -> [(a,a)]
-pairs (a:a':as) = (a,a') : pairs (a':as)
-pairs _ = []
-
 initialPitch :: Pitch
 initialPitch =
     M.fromList [(Pos x y,objs)

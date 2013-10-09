@@ -7,10 +7,10 @@ import Draw
 import Helpers
 import KBM
 import State
+import Update
 
-main = play display black fps initialState drawState handleInput stepWorld
+main = play display black fps initialState drawState handleInput updateState
     where
-    stepWorld = const id
     fps = 30
     display = InWindow "gloss test" (width,height) (0,0)
     width  = 640

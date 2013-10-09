@@ -13,14 +13,8 @@ import Draw
 -- Mouse click --
 -----------------
 handleInput :: Event -> State -> State
-handleInput (EventKey (Char 'w') Down _ _) = pan %~ panUp
-handleInput (EventKey (Char 's') Down _ _) = pan %~ panDown
-handleInput (EventKey (Char 'a') Down _ _) = pan %~ panLeft
-handleInput (EventKey (Char 'd') Down _ _) = pan %~ panRight
-handleInput (EventKey (Char '-') Down _ _) = scaleFactor *~ 0.9
-handleInput (EventKey (Char '=') Down _ _) = scaleFactor *~ 1.1
-handleInput (EventKey (Char '.') Down _ _) = const initialState
-handleInput _                              = id
+handleInput (EventKey k keyState _ _) = keysDown . contains k .~ (keyState == Down) -- this should be strict
+handleInput _ = id
 {-
 keyCallback ref (MouseButton LeftButton) Down _ mouse = do
 -- change which hex is selected
@@ -45,12 +39,6 @@ keyCallback ref (MouseButton _) Up _ _ =
 -}
 keyCallback _ _ _ _ _ _ = return ()
 
--- TODO: change this to lens fst and snd
-panUp, panDown, panLeft, panRight :: (Float, Float) -> (Float, Float)
-panUp    (x,y) = (x  ,y-1)
-panDown  (x,y) = (x  ,y+1)
-panLeft  (x,y) = (x+1,y  )
-panRight (x,y) = (x-1,y  )
 {-
 getHit :: State -> Position -> IO (Maybe HitReturn)
 getHit state (Position x y) = undefined {- do

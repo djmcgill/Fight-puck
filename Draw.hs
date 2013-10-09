@@ -12,7 +12,7 @@ import Helpers
 import State
 
 drawState :: State -> Picture
-drawState (State{..}) = Scale _scaleFactor _scaleFactor $ uncurry Translate _pan $
+drawState (State{..}) = Scale _zoom' _zoom' $ uncurry Translate _pan $
         Pictures [drawPitch _pitch, maybe Blank drawSelection _selected]
 
 drawPitch :: Pitch -> Picture
@@ -30,9 +30,4 @@ drawSelection :: Pos -> Picture
 drawSelection pos = translatePos pos $ Color red $ Line hexVerts
 
 drawPath :: [Pos] -> Picture
-drawPath path = Color black $ Line $ map coord path
-    -- note here we have
-        -- Line [v0,v1,v2,...]
-    -- might need
-        -- Pictures [Line [v0,v1], Line [v1,v2], ...]
-    -- instead
+drawPath = Color black . Line . map coord
