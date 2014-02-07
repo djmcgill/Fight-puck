@@ -10,7 +10,7 @@ import Graphics.Gloss.Data.ViewPort
 import Game
 
 hexVerts :: Path
-hexVerts = [(1,0),(0.5,h),(-0.5,h),(-1,0),(-0.5,-h),(0.5,-h)]
+hexVerts = [(0,1),(h,0.5),(h,-0.5),(0,-1),(-h,-0.5),(-h,0.5),(0,1)]
 
 translatePos = uncurry Translate . coord
 

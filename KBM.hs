@@ -2,8 +2,6 @@ module KBM where
 
 import Control.Applicative
 import Control.Lens
-import Control.Lens.Fold
-import Control.Lens.Reified
 import Control.Monad
 
 import Graphics.Gloss
