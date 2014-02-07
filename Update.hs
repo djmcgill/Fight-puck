@@ -7,6 +7,7 @@ import Data.Set (member)
 
 import Graphics.Gloss.Interface.Pure.Game
 
+import Helpers
 import State
 
 updateState :: Float -> State -> State
@@ -16,11 +17,11 @@ updateState dt state = appEndo (foldMap runAct (actions dt)) state
 
 actions :: Float -> [(Key, State -> State)]
 actions dt =
-    [ (Char 'w', pan._2 -~ 5*dt)
-    , (Char 's', pan._2 +~ 5*dt)
-    , (Char 'a', pan._1 +~ 5*dt)
-    , (Char 'd', pan._1 -~ 5*dt)
-    , (Char '-', zoom'  -~ 5*dt)
-    , (Char '=', zoom'  +~ 5*dt)
+    [ (Char 'w', viewPort.vpTranslate._2 -~ 5  *dt)
+    , (Char 's', viewPort.vpTranslate._2 +~ 5  *dt)
+    , (Char 'a', viewPort.vpTranslate._1 +~ 5  *dt)
+    , (Char 'd', viewPort.vpTranslate._1 -~ 5  *dt)
+    , (Char '-', viewPort.vpScale        *~ 1-1*dt)
+    , (Char '=', viewPort.vpScale        *~ 1+1*dt)
     , (Char 'r', const initialState)
     ]

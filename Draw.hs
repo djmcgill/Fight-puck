@@ -2,17 +2,17 @@
 module Draw where
 
 import Control.Lens
-import Control.Monad (forM_)
 import qualified Data.Map as M
 
 import Graphics.Gloss
+import Graphics.Gloss.Data.ViewPort
 
 import Game
 import Helpers
 import State
 
 drawState :: State -> Picture
-drawState (State{..}) = Scale _zoom' _zoom' $ uncurry Translate _pan $
+drawState (State{..}) = applyViewPortToPicture _viewPort $
         Pictures [drawPitch _pitch, maybe Blank drawSelection _selected]
 
 drawPitch :: Pitch -> Picture
@@ -26,6 +26,7 @@ drawObject :: Object -> Picture
 drawObject Wall = Color blue (Polygon hexVerts)
 drawObject _    = Blank
 
+-- this isn't working properly - the bottom-right corner is still black
 drawSelection :: Pos -> Picture
 drawSelection pos = translatePos pos $ Color red $ Line hexVerts
 
