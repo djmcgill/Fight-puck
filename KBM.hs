@@ -3,7 +3,7 @@ module KBM where
 import Control.Applicative
 import Control.Lens
 import Control.Lens.Fold
-import Control.Lens.Reified 
+import Control.Lens.Reified
 import Control.Monad
 
 import Graphics.Gloss
@@ -12,10 +12,6 @@ import Graphics.Gloss.Interface.Pure.Game
 
 import Game
 import State
-import Helpers
-import Draw
-
-import Debug.Trace
 
 -----------------
 -- Mouse click --
@@ -32,3 +28,4 @@ newSelection xy vp pitch = inPitch pitch `mfilter` Just pos
 
 -- note this can be done with Control.Lens.Reified.Fold:
 -- runFold $ (,) <$> Fold viewPort <*> Fold selected
+
