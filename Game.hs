@@ -1,5 +1,8 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Game where
 
+import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as M
 
@@ -10,9 +13,14 @@ data Pos = Pos !Int !Int
 
 type UID = Int
 
-type Pitch = Map Pos Object
+data Object = Puck | PlayerO UID | Empty
+    deriving (Eq, Show)
 
-data Object = Puck | Wall | PlayerO UID | Empty
+data Pitch = Pitch
+    { _walls :: [[Pos]]
+    , _hexes :: Map Pos Object
+    } deriving (Eq, Show)
+makeLenses ''Pitch
 
 data HexDir = HLeftUp  | HLeft  | HLeftDown
             | HRightUp | HRight | HRightDown
@@ -23,7 +31,6 @@ rotRight, rotLeft :: HexDir -> HexDir
 rotRight = toEnum . (`mod` 6) .      (+) 1 . fromEnum
 rotLeft  = toEnum . (`mod` 6) . subtract 1 . fromEnum
 
--- TODO: perhaps adjust so that right-up is `relative 1 1'?
 move :: HexDir -> Pos -> Pos
 move HLeftUp    = relative 0      1
 move HLeft      = relative (-1)   0
@@ -50,7 +57,6 @@ coord (Pos x y)
       in (h * (x' + 2*y'), x' * 1.5)
 
 -- given absolute coords in the hex grid, find the hex that is under that position
--- TODO: adjust to the new coord system
 unCoord :: (Float, Float) -> Pos
 unCoord (x, y) = Pos rx' ry'
     where
@@ -74,15 +80,11 @@ unCoord (x, y) = Pos rx' ry'
                      then (rx, -rx-rz)
                      else (rx, ry)
 
-
-
-
 inPitch :: Pitch -> Pos -> Bool
-inPitch = flip M.member
+inPitch = flip M.member . _hexes
 
 initialPitch :: Pitch
-initialPitch =
-    M.fromList [(Pos x y,objs)
-    | x <- [-5..5], y <- [-5..5]
-    , let end x = abs x == 5
-    , let objs = if end y || end x then Wall else Empty]
+initialPitch = Pitch [] $
+    M.fromList [(Pos x y, Empty)
+    | y <- [-5..5], x <- [-5..5]]
+    where width y = 20-y

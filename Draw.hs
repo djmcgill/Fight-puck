@@ -16,14 +16,19 @@ drawState (State{..}) = applyViewPortToPicture _viewPort $
         Pictures [drawPitch _pitch, maybe Blank drawSelection _selected]
 
 drawPitch :: Pitch -> Picture
-drawPitch = Pictures . map eachObject . M.toList
+drawPitch (Pitch{..}) = Pictures [drawHexes _hexes, Pictures (map drawWall _walls)]
+
+drawHexes :: M.Map Pos Object -> Picture
+drawHexes = Pictures . map eachObject . M.toList
     where
     eachObject (pos,object) = translatePos pos $ Pictures [hex, drawObject object, boundary]
     hex      = Color white $ Polygon hexVerts
     boundary = Color black $ Line    hexVerts
 
+drawWall :: [Pos] -> Picture
+drawWall _ = Blank
+
 drawObject :: Object -> Picture
-drawObject Wall = Color blue (Polygon hexVerts)
 drawObject _    = Blank
 
 -- this isn't working properly - the bottom-right corner is still black

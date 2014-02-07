@@ -2,13 +2,3 @@ A simple game I'm making as a progamming exercise.
 
 Made using Haskell and gloss.
 
-TODO:
-	for click-and-drag panning, record the inital offset of the mouse curser from (0,0). Then we can just snap to something
-
-	clean up KBM (remove everything)
-
-	clean up Game
-
-	re-add clicking on a hex. Needs a reverse of 'coords' i.e. 'hex :: (Float,Float) -> Pos'
-
-	add a lens iso for Pos and (Int,Int) or whatever
