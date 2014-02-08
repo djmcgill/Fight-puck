@@ -24,6 +24,6 @@ initialState = State
     { _pitch    = initialPitch
     , _players  = M.empty
     , _selected = Nothing
-    , _viewPort = viewPortInit{viewPortScale = 10}
+    , _viewPort = viewPortInit{viewPortScale = 15}
     , _keysDown = S.empty
     }

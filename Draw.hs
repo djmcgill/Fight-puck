@@ -29,9 +29,10 @@ drawWall :: [Pos] -> Picture
 drawWall _ = Blank
 
 drawObject :: Object -> Picture
-drawObject _    = Blank
+drawObject Puck          = Color black (Circle 0.3)
+drawObject (Player {..}) = Color (if _canMove then blue else light blue) (Circle 0.4)
+drawObject _             = Blank
 
--- this isn't working properly - the bottom-right corner is still black
 drawSelection :: Pos -> Picture
 drawSelection pos = translatePos pos $ Color red $ Line hexVerts
 

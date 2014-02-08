@@ -3,6 +3,7 @@
 module Game where
 
 import Control.Lens
+import Control.Monad
 import Data.Map (Map)
 import qualified Data.Map as M
 
@@ -12,6 +13,12 @@ data Pos = Pos !Int !Int
 -- The hex coordinate system, see below
 
 type UID = Int
+data Player = Player
+    { _uid       :: UID
+    , _canMove   :: Bool
+    , _direction :: HexDir
+    , _speed     :: Int
+    } deriving (Eq, Show)
 
 data Object = Puck | PlayerO UID | Empty
     deriving (Eq, Show)
@@ -42,12 +49,11 @@ move HRightDown = relative 0    (-1)
 relative :: Int -> Int -> Pos -> Pos
 relative x y (Pos x' y') = Pos (x+x') (y+y')
 
-data Player = Player {
-    uid :: UID}
-
-
 h :: Float
 h = 0.5 * sqrt 3
+-----------------------------------------------
+-- Pitch related things
+-----------------------------------------------
 
 -- | Turn a position in the hex coordinates into standard x,y
 coord :: Pos -> (Float,Float)
@@ -55,6 +61,9 @@ coord (Pos x y)
     = let x' = fromIntegral x
           y' = fromIntegral y
       in (h * (x' + 2*y'), x' * 1.5)
+
+getPos :: (Float, Float) -> Pitch -> Maybe Pos
+getPos xy pitch = mfilter (inPitch pitch) (Just (unCoord xy))
 
 -- given absolute coords in the hex grid, find the hex that is under that position
 unCoord :: (Float, Float) -> Pos
@@ -86,5 +95,5 @@ inPitch = flip M.member . _hexes
 initialPitch :: Pitch
 initialPitch = Pitch [] $
     M.fromList [(Pos x y, Empty)
-    | y <- [-5..5], x <- [-5..5]]
+    | x <- [-5..5], y <- [- (10 + min x 0)..10 - max x 0]]
     where width y = 20-y
