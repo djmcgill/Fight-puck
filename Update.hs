@@ -31,22 +31,46 @@ actions dt =
     , (Char '-', viewPort.vpScale        *~ 1-1*dt)
     , (Char '=', viewPort.vpScale        *~ 1+1*dt)
     , (Char 'r', const initialState)
-    , (MouseButton LeftButton, \s -> s & selected .~ (_mouseOver s >>= newSelection (_pitch s)))
-    , (MouseButton RightButton, \s -> s {- if playerInSelected then -})
+    , (MouseButton LeftButton , setSelection      )
+    , (MouseButton RightButton, moveSelectedPlayer)
     ]
 
-movePlayer :: UID -> State -> State
-movePlayer uid s = maybe id (movePlayer' 0) (M.lookup uid (s^.players)) s
+setSelection :: State -> State
+setSelection s = set selected (_mouseOver s >>= newSelection (_pitch s)) s
     where
-    movePlayer' :: Int -> Player -> State -> State
-    movePlayer' !moved (Player{..}) s'
-        | _canMove && _speed >= moved = undefined
+    newSelection pitch xy = inPitch pitch `mfilter` Just (unCoord xy)
+
+moveSelectedPlayer :: State -> State
+moveSelectedPlayer s = maybe id movePlayerOnHex (_selected s) s
+
+movePlayerOnHex :: Pos -> State -> State
+movePlayerOnHex hex s = maybe id movePlayer mPlayer s
+    where
+    -- could use maybe monad here
+    mUID :: Maybe UID
+    mUID = s ^? pitch . hexes . ix hex . _PlayerO
+
+    mPlayer :: Maybe Player
+    mPlayer = mUID >>= (\uid -> s ^? players . ix uid)
+
+    movePlayer :: Player -> State -> State
+    movePlayer p@Player{..} s' = movePlayer' 0 s'
+        where
+        movePlayer' :: Int -> State -> State
+        movePlayer' !moved s''
+            | _canMove && _speed >= moved = movePlayer' (moved+1) (s'' & pitch .~ pitch')
+            where
+            hex' = move _direction hex
+            pitch' = case validMove hex _direction (_pitch s'') of
+                Nothing -> undefined -- there was a collision here, was it with a wall or a player?
+                                     -- update the player(s)
+                Just p -> p
+
+collidePlayers :: (Player, Player) -> (Player, Player)
+collidePlayers = undefined
+
+collideWall :: Player -> Player
+collideWall = undefined
 
 validMove :: Pos -> HexDir -> Pitch -> Maybe Pitch
 validMove = undefined
-
-findPlayer :: UID -> Pitch -> Maybe Pos
-findPlayer = undefined
-
-newSelection :: Pitch -> (Float, Float) -> Maybe Pos
-newSelection pitch xy = inPitch pitch `mfilter` Just (unCoord xy)

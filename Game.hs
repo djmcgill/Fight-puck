@@ -16,6 +16,7 @@ type UID = Int
 
 data Object = Puck | PlayerO UID | Empty
     deriving (Eq, Show)
+makePrisms ''Object
 
 data Pitch = Pitch
     { _walls :: [[Pos]]
