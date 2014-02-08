@@ -17,9 +17,5 @@ import State
 -----------------
 handleInput :: Event -> State -> State
 handleInput (EventKey k keyState _ _) s = s & keysDown . contains k .~ (keyState == Down)
-handleInput (EventMotion xy)          s = s & selected .~ getPos (invertViewPort (s^.viewPort) xy) (s^.pitch)
+handleInput (EventMotion xy)          s = s & mouseOver ?~ invertViewPort (_viewPort s) xy
 handleInput _ s = s
-
--- note this can be done with Control.Lens.Reified.Fold:
--- runFold $ (,) <$> Fold viewPort <*> Fold selected
-

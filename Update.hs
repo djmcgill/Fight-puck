@@ -3,6 +3,7 @@
 module Update (updateState) where
 
 import Control.Lens
+import Control.Monad
 import Data.Foldable
 import Data.Monoid
 import Data.Set (member)
@@ -10,8 +11,11 @@ import qualified Data.Map as M
 
 import Graphics.Gloss.Interface.Pure.Game
 
+import Game
 import Helpers
 import State
+
+import Debug.Trace
 
 updateState :: Float -> State -> State
 updateState dt state = appEndo (foldMap runAct (actions dt)) state
@@ -27,6 +31,8 @@ actions dt =
     , (Char '-', viewPort.vpScale        *~ 1-1*dt)
     , (Char '=', viewPort.vpScale        *~ 1+1*dt)
     , (Char 'r', const initialState)
+    , (MouseButton LeftButton, \s -> s & selected .~ (_mouseOver s >>= newSelection (_pitch s)))
+    , (MouseButton RightButton, \s -> s {- if playerInSelected then -})
     ]
 
 movePlayer :: UID -> State -> State
@@ -34,11 +40,13 @@ movePlayer uid s = maybe id (movePlayer' 0) (M.lookup uid (s^.players)) s
     where
     movePlayer' :: Int -> Player -> State -> State
     movePlayer' !moved (Player{..}) s'
-        | _canMove && _speed >= moved =
-            case validMove
+        | _canMove && _speed >= moved = undefined
 
 validMove :: Pos -> HexDir -> Pitch -> Maybe Pitch
 validMove = undefined
 
 findPlayer :: UID -> Pitch -> Maybe Pos
 findPlayer = undefined
+
+newSelection :: Pitch -> (Float, Float) -> Maybe Pos
+newSelection pitch xy = inPitch pitch `mfilter` Just (unCoord xy)

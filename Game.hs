@@ -13,12 +13,6 @@ data Pos = Pos !Int !Int
 -- The hex coordinate system, see below
 
 type UID = Int
-data Player = Player
-    { _uid       :: UID
-    , _canMove   :: Bool
-    , _direction :: HexDir
-    , _speed     :: Int
-    } deriving (Eq, Show)
 
 data Object = Puck | PlayerO UID | Empty
     deriving (Eq, Show)
@@ -32,6 +26,14 @@ makeLenses ''Pitch
 data HexDir = HLeftUp  | HLeft  | HLeftDown
             | HRightUp | HRight | HRightDown
             deriving (Eq,Enum,Ord,Show)
+
+data Player = Player
+    { _uid       :: UID
+    , _canMove   :: Bool
+    , _direction :: HexDir
+    , _speed     :: Int
+    } deriving (Eq, Show)
+
 
 -- hard coding these would be faster
 rotRight, rotLeft :: HexDir -> HexDir
