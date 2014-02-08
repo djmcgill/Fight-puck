@@ -16,12 +16,8 @@ import State
 -----------------
 handleInput :: Event -> State -> State
 handleInput (EventKey k keyState _ _) s = s & keysDown . contains k .~ (keyState == Down)
-handleInput (EventMotion pos)         s = s & selected .~ newSelection pos (s^.viewPort) (s^.pitch)
+handleInput (EventMotion xy)          s = s & mouseOver ?~ invertViewPort (_viewPort s) xy
 handleInput _ s = s
-
-newSelection :: (Float, Float) -> ViewPort -> Pitch -> Maybe Pos
-newSelection xy vp pitch = inPitch pitch `mfilter` Just pos
-	where pos = unCoord (invertViewPort vp xy)
 
 
 -- note this can be done with Control.Lens.Reified.Fold:
