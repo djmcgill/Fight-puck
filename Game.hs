@@ -70,27 +70,7 @@ getPos xy pitch = mfilter (inPitch pitch) (Just (unCoord xy))
 
 -- given absolute coords in the hex grid, find the hex that is under that position
 unCoord :: (Float, Float) -> Pos
-unCoord (x, y) = Pos rx' ry'
-    where
-    x' = 2/3 * y
-    y' = 1/3 * (sqrt(3) * x - y)
-    z' = -x'-y'
-
-    rx, ry, rz :: Int
-    rx = round x'
-    ry = round y'
-    rz = round z'
-
-    xDiff = abs (fromIntegral rx - x')
-    yDiff = abs (fromIntegral ry - y')
-    zDiff = abs (fromIntegral rz - z')
-
-    (rx',ry') = -- ignore the biggest of the diffs
-        if xDiff > yDiff && xDiff > zDiff
-            then (-ry-rz, ry)
-            else if yDiff > zDiff
-                     then (rx, -rx-rz)
-                     else (rx, ry)
+unCoord (x, y) = nearestHex (2/3 * y) (1/3 * (sqrt(3) * x - y))
 
 inPitch :: Pitch -> Pos -> Bool
 inPitch = flip M.member . _hexes
@@ -100,3 +80,22 @@ initialPitch = Pitch [] $
     M.fromList [(Pos x y, Empty)
     | x <- [-5..5], y <- [- (10 + min x 0)..10 - max x 0]]
     where width y = 20-y
+
+-- given hex coords, round to the nearest one
+-- http://www.redblobgames.com/grids/hexagons/?#rounding
+nearestHex :: Float -> Float -> Pos
+nearestHex hx hy
+    | xDiff > yDiff && xDiff > zDiff = Pos (-ry-rz)     ry
+    | yDiff > zDiff                  = Pos      rx (-rx-rz)
+    | otherwise                      = Pos      rx      ry
+    where
+    z = -x-y
+
+    rx, ry, rz :: Int
+    rx = round x
+    ry = round y
+    rz = round z
+
+    xDiff = abs (fromIntegral rx - x)
+    yDiff = abs (fromIntegral ry - y)
+    zDiff = abs (fromIntegral rz - z)

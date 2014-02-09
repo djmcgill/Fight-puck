@@ -44,6 +44,7 @@ moveSelectedPlayer :: State -> State
 moveSelectedPlayer s = maybe id movePlayerOnHex (_selected s) s
 
 -- XXX: not finished yet. extremely temporary and messy code below
+-- TODO switch this into the State monad and see what that looks like
 movePlayerOnHex :: Pos -> State -> State
 movePlayerOnHex hex s = maybe id movePlayer mPlayer s
     where
