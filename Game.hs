@@ -79,7 +79,6 @@ initialPitch :: Pitch
 initialPitch = Pitch [] $
     M.fromList [(Pos x y, Empty)
     | x <- [-5..5], y <- [- (10 + min x 0)..10 - max x 0]]
-    where width y = 20-y
 
 -- given hex coords, round to the nearest one
 -- http://www.redblobgames.com/grids/hexagons/?#rounding

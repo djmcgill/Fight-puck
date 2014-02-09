@@ -10,12 +10,12 @@ import Graphics.Gloss.Interface.Pure.Game
 import  Debug.Trace
 
 import Game
-import State
+import GameState
 
 -----------------
 -- Mouse click --
 -----------------
-handleInput :: Event -> State -> State
+handleInput :: Event -> GameState -> GameState
 handleInput (EventKey k keyState _ _) s = s & keysDown . contains k .~ (keyState == Down)
 handleInput (EventMotion xy)          s = s & mouseOver ?~ invertViewPort (_viewPort s) xy
 handleInput _ s = s

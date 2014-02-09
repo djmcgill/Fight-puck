@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module State where
+module GameState where
 
 import Graphics.Gloss.Data.ViewPort
 import Graphics.Gloss.Interface.Pure.Game (Key)
@@ -11,7 +11,7 @@ import qualified Data.Set as S
 
 import Game
 
-data State = State
+data GameState = GameState
     { _pitch     :: Pitch
     , _players   :: M.Map UID Player
     , _selected  :: Maybe Pos
@@ -19,9 +19,9 @@ data State = State
     , _viewPort  :: ViewPort
     , _keysDown  :: S.Set Key
     }
-makeLenses ''State
+makeLenses ''GameState
 
-initialState = State
+initialGameState = GameState
     { _pitch     = initialPitch
     , _players   = M.empty
     , _selected  = Nothing

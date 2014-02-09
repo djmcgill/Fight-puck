@@ -6,10 +6,10 @@ import Game
 import Draw
 import Helpers
 import KBM
-import State
+import GameState
 import Update
 
-main = play display black fps initialState drawState handleInput updateState
+main = play display black fps initialState drawGameState handleInput updateGameState
     where
     fps = 30
     display = InWindow "gloss test" (width,height) (0,0)
