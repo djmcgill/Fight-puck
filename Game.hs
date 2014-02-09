@@ -83,7 +83,7 @@ initialPitch = Pitch [] $
 -- given hex coords, round to the nearest one
 -- http://www.redblobgames.com/grids/hexagons/?#rounding
 nearestHex :: Float -> Float -> Pos
-nearestHex hx hy
+nearestHex x y
     | xDiff > yDiff && xDiff > zDiff = Pos (-ry-rz)     ry
     | yDiff > zDiff                  = Pos      rx (-rx-rz)
     | otherwise                      = Pos      rx      ry

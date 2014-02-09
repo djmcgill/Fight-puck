@@ -17,9 +17,9 @@ import Helpers
 import GameState
 
 updateGameState :: Float -> GameState -> GameState
-updateGameState dt GameState = appEndo (foldMap runAct (actions dt)) GameState
+updateGameState dt gameState = appEndo (foldMap runAct (actions dt)) gameState
     where
-    runAct (k,f) = if member k (_keysDown GameState) then Endo f else mempty
+    runAct (k,f) = if member k (_keysDown gameState) then Endo f else mempty
 
 actions :: Float -> [(Key, GameState -> GameState)]
 actions dt =

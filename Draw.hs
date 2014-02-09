@@ -9,10 +9,10 @@ import Graphics.Gloss.Data.ViewPort
 
 import Game
 import Helpers
-import State
+import GameState
 
-drawState :: State -> Picture
-drawState (State{..}) = applyViewPortToPicture _viewPort $
+drawGameState :: GameState -> Picture
+drawGameState (GameState{..}) = applyViewPortToPicture _viewPort $
         Pictures [drawPitch _pitch, maybe Blank drawSelection _selected]
 
 drawPitch :: Pitch -> Picture
