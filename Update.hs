@@ -43,6 +43,7 @@ setSelection s = set selected (_mouseOver s >>= newSelection (_pitch s)) s
 moveSelectedPlayer :: State -> State
 moveSelectedPlayer s = maybe id movePlayerOnHex (_selected s) s
 
+-- XXX: not finished yet. extremely temporary and messy code below
 movePlayerOnHex :: Pos -> State -> State
 movePlayerOnHex hex s = maybe id movePlayer mPlayer s
     where
