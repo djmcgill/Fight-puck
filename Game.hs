@@ -4,6 +4,7 @@ module Game where
 
 import Control.Lens
 import Control.Monad
+import qualified Data.Bimap as B
 import Data.Map (Map)
 import qualified Data.Map as M
 
@@ -14,12 +15,21 @@ data Pos = Pos !Int !Int
 
 type UID = Int
 
-data Object = Puck | PlayerO UID | Empty
+data Object = PlayerO UID | Empty
     deriving (Eq, Show)
 makePrisms ''Object
 
+type Walls = B.Bimap Pos Pos
+-- TODO: could save this as a list of pair of hexes which you can't go from one to the other
+--       it probably should be commutative for now
+addWall :: Pos -> Pos -> Walls -> Walls
+addWall = B.insert
+
+wallBetween :: Pos -> Pos -> Walls -> Bool
+wallBetween p1 p2 w = B.pairMember (p1,p2) w || B.pairMember (p2,p1) w
+
 data Pitch = Pitch
-    { _walls :: [[Pos]]
+    { _walls :: Walls
     , _hexes :: Map Pos Object
     } deriving (Eq, Show)
 makeLenses ''Pitch
@@ -33,7 +43,15 @@ data Player = Player
     , _canMove   :: Bool
     , _direction :: HexDir
     , _speed     :: Int
+    , _upright   :: Bool
     } deriving (Eq, Show)
+makeLenses ''Player
+
+testPlayer = Player 0 True HRight 3 True
+
+
+standupCost :: Int
+standupCost = 2
 
 
 -- hard coding these would be faster
@@ -76,7 +94,7 @@ inPitch :: Pitch -> Pos -> Bool
 inPitch = flip M.member . _hexes
 
 initialPitch :: Pitch
-initialPitch = Pitch [] $
+initialPitch = Pitch B.empty $
     M.fromList [(Pos x y, Empty)
     | x <- [-5..5], y <- [- (10 + min x 0)..10 - max x 0]]
 

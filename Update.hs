@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, RecordWildCards #-}
+{-# LANGUAGE BangPatterns, RecordWildCards, LambdaCase #-}
 
 module Update (updateGameState) where
 
@@ -6,11 +6,14 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.State
 import Data.Foldable
+import Data.Maybe
 import Data.Monoid
 import Data.Set (member)
 import qualified Data.Map as M
 
 import Graphics.Gloss.Interface.Pure.Game
+
+import Debug.Trace
 
 import Game
 import Helpers
@@ -40,38 +43,75 @@ setSelection s = set selected (_mouseOver s >>= newSelection (_pitch s)) s
     newSelection pitch xy = inPitch pitch `mfilter` Just (unCoord xy)
 
 moveSelectedPlayer :: GameState -> GameState
-moveSelectedPlayer s = maybe id movePlayerOnHex (_selected s) s
+moveSelectedPlayer s =  maybe id movePlayerFromHex (_selected s) s
+
+data Collision = WallC | PlayerC UID
 
 -- XXX: not finished yet. extremely temporary and messy code below
--- TODO switch this into the GameState monad and see what that looks like
-movePlayerOnHex :: Pos -> GameState -> GameState
-movePlayerOnHex hex s = maybe id movePlayer mPlayer s
-    where
-    -- could use maybe monad here
-    mUID :: Maybe UID
-    mUID = s ^? pitch . hexes . ix hex . _PlayerO
+-- TODO need to check that the mouse is over the selected player too
+movePlayerFromHex :: Pos -> GameState -> GameState
+movePlayerFromHex initHex s = fromMaybe s $ do
+    uid <- s ^? pitch . hexes . ix initHex . _PlayerO
+    p@Player{..} <- s ^? players . ix uid
 
-    mPlayer :: Maybe Player
-    mPlayer = mUID >>= (\uid -> s ^? players . ix uid)
+    let movePlayer :: Int -> State GameState ()
+        movePlayer !moved
+            | _canMove && _upright && _speed >= moved = do
+                collision <- zoom pitch updatePitch
+                case collision of
+                    Just WallC          -> onPlayer p %= collideWall
+                    Just (PlayerC uid2) -> case s ^? players . ix uid2 of
+                        Nothing -> return ()
+                        Just p2 -> do
+                            let (p', p2') = collidePlayers p p2
+                            onPlayer p  .= p'
+                            onPlayer p2 .= p2'
+                    Nothing -> return ()
+                movePlayer (moved+1)
+            | _canMove && not _upright && _speed >= (moved + standupCost) = do
+                onPlayer p . upright .= True
+                movePlayer (moved+standupCost)
+            | _canMove = onPlayer p . canMove .= False
+            | otherwise = return ()
 
-    movePlayer :: Player -> GameState -> GameState
-    movePlayer p@Player{..} s' = movePlayer' 0 s'
-        where
-        movePlayer' :: Int -> GameState -> GameState
-        movePlayer' !moved s''
-            | _canMove && _speed >= moved = movePlayer' (moved+1) (s'' & pitch .~ pitch')
             where
-            hex' = move _direction hex
-            pitch' = case validMove hex _direction (_pitch s'') of
-                Nothing -> undefined -- there was a collision here, was it with a wall or a player?
-                                     -- update the player(s)
-                Just p -> p
+            updatePitch :: State Pitch (Maybe Collision)
+            updatePitch = do
+                pitch' <- get
+                let hex = fromMaybe (error $ "validMoved called on non-existent uid: " ++ show uid) $
+                        uidLocation uid pitch'
+                    hex' = move _direction hex
 
-collidePlayers :: (Player, Player) -> (Player, Player)
-collidePlayers = undefined
+                    validMove :: Pitch -> Either Collision Pitch
+                    validMove pitch''
+                        | wallBetween hex hex' (_walls pitch'')  = Left WallC
+                        | otherwise = case pitch'' ^. hexes . at hex' of
+                            Nothing             -> Left WallC
+                            Just (PlayerO uid2) -> Left (PlayerC uid2)
+                            Just Empty          -> Right (swapPlayer pitch'')
+                        where
+                        swapPlayer = (hexes . ix hex' .~ PlayerO uid) . (hexes . ix hex .~ Empty)
+                case validMove pitch' of
+                    Left c  -> return (Just c)
+                    Right p -> put p >> return Nothing
+
+
+
+
+    return $ execState (movePlayer 0) s
+
+collidePlayers :: Player -> Player -> (Player, Player)
+collidePlayers p p2 = (fall p, fall p2)
+
+fall :: Player -> Player
+fall = upright .~ False
 
 collideWall :: Player -> Player
-collideWall = undefined
+collideWall = fall
 
-validMove :: Pos -> HexDir -> Pitch -> Maybe Pitch
-validMove = undefined
+uidLocation :: UID -> Pitch -> Maybe Pos
+uidLocation uid = fmap fst . listToMaybe . filter ((PlayerO uid ==) . snd) . M.toList . _hexes
+-- traversed.ifiltered?
+
+
+onPlayer p = players.ix (_uid p)

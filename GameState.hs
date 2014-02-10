@@ -21,7 +21,7 @@ data GameState = GameState
     }
 makeLenses ''GameState
 
-initialGameState = GameState
+initialGameState = unsafeInsertPlayer testPlayer (Pos 0 0) $ GameState
     { _pitch     = initialPitch
     , _players   = M.empty
     , _selected  = Nothing
@@ -29,3 +29,11 @@ initialGameState = GameState
     , _viewPort  = viewPortInit{viewPortScale = 10}
     , _keysDown  = S.empty
     }
+
+
+
+unsafeInsertPlayer :: Player -> Pos -> GameState -> GameState
+unsafeInsertPlayer player hex s =
+    (pitch . hexes . at hex ?~ PlayerO (_uid player)) .
+    (players . at (_uid player) ?~ player) $ s
+

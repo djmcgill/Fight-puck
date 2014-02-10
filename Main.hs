@@ -12,6 +12,6 @@ import Update
 main = play display black fps initialGameState drawGameState handleInput updateGameState
     where
     fps = 30
-    display = InWindow "gloss test" (width,height) (0,0)
+    display = InWindow "FIGHT PUCK" (width,height) (0,0)
     width  = 640
     height = 480
