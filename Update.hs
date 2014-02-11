@@ -2,6 +2,7 @@
 
 module Update (updateGameState) where
 
+import Control.Applicative
 import Control.Lens
 import Control.Monad
 import Control.Monad.State
@@ -38,9 +39,9 @@ actions dt =
     ]
 
 setSelection :: GameState -> GameState
-setSelection s = s & selected .~ (_mouseOver s >>= newSelection)
+setSelection s = s & selected .~ exists (unCoord <$> _mouseOver s)
     where
-    newSelection = mfilter (inPitch (_pitch s)) . Just . unCoord
+    exists = mfilter (inPitch (_pitch s))
 
 moveSelectedPlayer :: GameState -> GameState
 moveSelectedPlayer s = fromMaybe s $ do
