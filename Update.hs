@@ -14,8 +14,6 @@ import qualified Data.Map as M
 
 import Graphics.Gloss.Interface.Pure.Game
 
-import Debug.Trace
-
 import Game
 import Helpers
 import GameState
@@ -34,6 +32,7 @@ actions dt =
     , (Char '-', viewPort.vpScale        *~ 1-1*dt)
     , (Char '=', viewPort.vpScale        *~ 1+1*dt)
     , (Char 'r', const initialGameState)
+
     , (MouseButton LeftButton , setSelection      )
     , (MouseButton RightButton, moveSelectedPlayer)
     ]

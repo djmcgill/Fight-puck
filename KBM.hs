@@ -1,15 +1,10 @@
 module KBM where
 
-import Control.Applicative
 import Control.Lens
 
-import Graphics.Gloss
 import Graphics.Gloss.Data.ViewPort
 import Graphics.Gloss.Interface.Pure.Game
 
-import  Debug.Trace
-
-import Game
 import GameState
 
 -----------------
