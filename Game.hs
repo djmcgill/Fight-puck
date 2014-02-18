@@ -34,9 +34,12 @@ data Pitch = Pitch
     } deriving (Eq, Show)
 makeLenses ''Pitch
 
-data HexDir = HLeftUp  | HLeft  | HLeftDown
-            | HRightUp | HRight | HRightDown
-            deriving (Eq,Enum,Ord,Show)
+data HexDir = HLeftUp | HRightUp | HRight | HRightDown | HLeftDown | HLeft
+    deriving (Eq,Enum,Ord,Show)
+
+-- work out the required clockwise rotation in degrees to display hexdir
+hexAngle :: HexDir -> Float
+hexAngle dir = fromIntegral $ (fromEnum dir)*60 - 30
 
 data Player = Player
     { _uid       :: UID
@@ -60,12 +63,12 @@ rotRight = toEnum . (`mod` 6) .      (+) 1 . fromEnum
 rotLeft  = toEnum . (`mod` 6) . subtract 1 . fromEnum
 
 move :: HexDir -> Pos -> Pos
-move HLeftUp    = relative 0      1
-move HLeft      = relative (-1)   0
-move HLeftDown  = relative (-1) (-1)
-move HRightUp   = relative 1      1
-move HRight     = relative 1      0
-move HRightDown = relative 0    (-1)
+move HLeftUp    = relative (-1)   0
+move HLeft      = relative   0  (-1)
+move HLeftDown  = relative   1  (-1)
+move HRightUp   = relative (-1)   1
+move HRight     = relative   0    1
+move HRightDown = relative   1    0
 
 relative :: Int -> Int -> Pos -> Pos
 relative x y (Pos x' y') = Pos (x+x') (y+y')

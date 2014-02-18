@@ -32,10 +32,21 @@ actions dt =
     , (Char '-', viewPort.vpScale        *~ 1-1*dt)
     , (Char '=', viewPort.vpScale        *~ 1+1*dt)
     , (Char 'r', const initialGameState)
+    , (Char '.', nextTurn)
 
-    , (MouseButton LeftButton , setSelection      )
-    , (MouseButton RightButton, moveSelectedPlayer)
+-- TODO: need to limit the number of times this can rotate per second
+    , (SpecialKey KeyLeft     , selectedPlayer.direction %~ rotLeft )
+    , (SpecialKey KeyRight    , selectedPlayer.direction %~ rotRight)
+
+    , (MouseButton LeftButton , setSelection       )
+    , (MouseButton RightButton, moveSelectedPlayer )
     ]
+
+nextTurn :: GameState -> GameState
+nextTurn = (turn +~ 1) . (players.traverse.canMove .~ True)
+
+rotPlayer :: Int -> GameState -> GameState
+rotPlayer = undefined
 
 setSelection :: GameState -> GameState
 setSelection s = s & selected .~ exists (unCoord <$> _mouseOver s)
@@ -44,53 +55,54 @@ setSelection s = s & selected .~ exists (unCoord <$> _mouseOver s)
 
 moveSelectedPlayer :: GameState -> GameState
 moveSelectedPlayer s = fromMaybe s $ do
-    hex  <- _selected s
-    xy   <- _mouseOver s
-    hex' <- getPos xy (_pitch s)
+    hex  <- s ^. selected
+    xy   <- s ^. mouseOver
+    hex' <- getPos xy (s^.pitch)
+    uid  <- s ^. selectedUID
     guard $ hex == hex'
-    return (movePlayerFromHex hex s)
+    return (movePlayerFromHex uid s)
 
 -- note that this function will crash if the uids exist in the board that aren't
 -- in the map of players
-movePlayerFromHex :: Pos -> GameState -> GameState
-movePlayerFromHex initHex s = flip (maybe s) (s ^? pitch . hexes . ix initHex . _PlayerO) $ \uid ->
-    let movePlayer :: Int -> State GameState ()
-        movePlayer !distMoved = use (players . at uid) >>= \(Just p@Player{..}) -> if
-            | _canMove && _upright && _speed >= distMoved -> do
-                pitch' <- use pitch
-                let Just hex = uidLocation uid pitch'
-                    hex'     = move _direction hex
-                selected .= Nothing
+movePlayerFromHex :: UID -> GameState -> GameState
+movePlayerFromHex uid s = execState (movePlayer 0) s
+    where
+    movePlayer :: Int -> State GameState ()
+    movePlayer !distMoved = use (players . at uid) >>= \(Just p@Player{..}) -> if
+        | _canMove && _upright && _speed >= distMoved -> do
+            pitch' <- use pitch
+            let Just hex = uidLocation uid pitch'
+                hex'     = move _direction hex
+            selected .= Nothing
 
-                -- what is in front of the player?
-                case pitch' ^. hexes . at hex' of
-                    -- a wall
-                    _ | wallBetween hex hex' (_walls pitch') -> onPlayer p %= collideWall
-                    -- the hex doesn't exist
-                    Nothing -> onPlayer p %= collideWall
-                    -- another player
-                    Just (PlayerO uid2) -> do
-                        Just p2 <- use (players . at uid2)
-                        let (p', p2') = collidePlayers p p2
-                        onPlayer p  .= p'
-                        onPlayer p2 .= p2'
-                    -- an empty hex
-                    Just Empty -> do
-                        pitch . hexes . ix hex' .= PlayerO uid
-                        pitch . hexes . ix hex  .= Empty
-                movePlayer (distMoved+1)
+            -- what is in front of the player?
+            case pitch' ^. hexes . at hex' of
+                -- a wall
+                _ | wallBetween hex hex' (_walls pitch') -> onPlayer p %= collideWall
+                -- the hex doesn't exist
+                Nothing -> onPlayer p %= collideWall
+                -- another player
+                Just (PlayerO uid2) -> do
+                    Just p2 <- use (players . at uid2)
+                    let (p', p2') = collidePlayers p p2
+                    onPlayer p  .= p'
+                    onPlayer p2 .= p2'
+                -- an empty hex
+                Just Empty -> do
+                    pitch . hexes . ix hex' .= PlayerO uid
+                    pitch . hexes . ix hex  .= Empty
+            movePlayer (distMoved+1)
 
-            -- stand up
-            | _canMove && not _upright && _speed >= (distMoved + standupCost) -> do
-                players . ix uid . upright .= True
-                movePlayer (distMoved+standupCost)
+        -- stand up
+        | _canMove && not _upright && _speed >= (distMoved + standupCost) -> do
+            players . ix uid . upright .= True
+            movePlayer (distMoved+standupCost)
 
-            -- finished move
-            | _canMove -> players . ix uid . canMove .= False
+        -- finished move
+        | _canMove -> players . ix uid . canMove .= False
 
-            -- can't move
-            | otherwise -> return ()
-    in execState (movePlayer 0) s
+        -- can't move
+        | otherwise -> return ()
 
 collidePlayers :: Player -> Player -> (Player, Player)
 collidePlayers p p2 = (fall p, fall p2)
